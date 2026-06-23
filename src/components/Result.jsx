@@ -1,39 +1,53 @@
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis
 } from 'recharts'
-import { PHASES, calcPhaseScore, calcTotalScore, getClassification, getTopCritical, getAIMessage } from '../data/phases'
+import { useLang } from '../i18n/LangContext'
+import { calcPhaseScore, calcTotalScore } from '../data/phases'
 
 export default function Result({ name, answers, onRestart }) {
+  const { t } = useLang()
+  const r = t.result
+  const phases = t.phases
+
   const phaseScores = {}
-  PHASES.forEach(p => { phaseScores[p.id] = calcPhaseScore(p, answers) })
+  phases.forEach(p => { phaseScores[p.id] = calcPhaseScore(p, answers) })
 
   const totalScore = calcTotalScore(phaseScores)
-  const classification = getClassification(totalScore)
-  const critical = getTopCritical(phaseScores)
-  const aiMessage = getAIMessage(classification.label, phaseScores)
 
-  const radarData = PHASES.map(p => ({
+  let classKey = 'Iniciante'
+  if (totalScore >= 78) classKey = 'Mestre'
+  else if (totalScore >= 55) classKey = 'Avançado'
+  else if (totalScore >= 30) classKey = 'Em Jogo'
+
+  const classification = t.classifications[classKey]
+  const scoreColor = totalScore >= 78 ? '#fff' : totalScore >= 55 ? '#E8C97A' : totalScore >= 30 ? '#C9A84C' : '#888'
+
+  const critical = Object.entries(phaseScores)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 3)
+    .map(([key]) => phases.find(p => p.id === key))
+
+  const criticalNames = critical.map(p => p.label).join(', ')
+  const aiMessage = t.ai_messages[classKey](criticalNames)
+
+  const radarData = phases.map(p => ({
     subject: p.label,
     score: phaseScores[p.id],
     fullMark: 100,
   }))
 
-  const scoreColor = classification.color
-
   return (
     <div className="fade-in min-h-screen flex flex-col items-center px-4 py-12 max-w-2xl mx-auto w-full">
-      {/* Header */}
       <p className="font-cinzel text-xs tracking-[5px] mb-4 text-center" style={{ color: '#C9A84C' }}>
-        DIAGNÓSTICO COMPLETO
+        {r.label}
       </p>
       <h1 className="font-cinzel text-3xl md:text-4xl font-black text-center mb-2 text-white">
         {name},
       </h1>
       <p className="text-center mb-10" style={{ color: '#888' }}>
-        aqui está a sua realidade.
+        {r.subtitle}
       </p>
 
-      {/* Score circle */}
       <div className="relative flex flex-col items-center mb-10">
         <div
           className="w-40 h-40 rounded-full flex flex-col items-center justify-center"
@@ -59,13 +73,12 @@ export default function Result({ name, answers, onRestart }) {
         </div>
       </div>
 
-      {/* Radar Chart */}
       <div
         className="w-full rounded-2xl p-6 mb-8"
         style={{ border: '1px solid #1e1e1e', background: '#0d0d0d' }}
       >
         <p className="font-cinzel text-xs tracking-[3px] mb-4 text-center" style={{ color: '#C9A84C' }}>
-          MAPA DAS 7 ÁREAS
+          {r.map}
         </p>
         <ResponsiveContainer width="100%" height={280}>
           <RadarChart data={radarData}>
@@ -87,13 +100,12 @@ export default function Result({ name, answers, onRestart }) {
         </ResponsiveContainer>
       </div>
 
-      {/* Phase scores */}
       <div className="w-full mb-8">
         <p className="font-cinzel text-xs tracking-[3px] mb-4" style={{ color: '#C9A84C' }}>
-          SCORE POR ÁREA
+          {r.score_label}
         </p>
         <div className="flex flex-col gap-3">
-          {PHASES.map(p => (
+          {phases.map(p => (
             <div key={p.id}>
               <div className="flex justify-between text-sm mb-1">
                 <span style={{ color: '#ccc' }}>{p.icon} {p.label}</span>
@@ -115,13 +127,12 @@ export default function Result({ name, answers, onRestart }) {
         </div>
       </div>
 
-      {/* Top 3 critical */}
       <div
         className="w-full rounded-2xl p-6 mb-8"
         style={{ border: '1px solid #3a0000', background: '#0d0000' }}
       >
         <p className="font-cinzel text-xs tracking-[3px] mb-4" style={{ color: '#E84C4C' }}>
-          🚨 TOP 3 PONTOS CRÍTICOS
+          {r.critical_label}
         </p>
         {critical.map((p, i) => (
           <div key={p.id} className="flex items-center gap-3 mb-3">
@@ -133,19 +144,18 @@ export default function Result({ name, answers, onRestart }) {
             </div>
             <div>
               <p className="text-white text-sm font-medium">{p.icon} {p.label}</p>
-              <p className="text-xs" style={{ color: '#666' }}>Score: {phaseScores[p.id]}/100</p>
+              <p className="text-xs" style={{ color: '#666' }}>{r.critical_score}: {phaseScores[p.id]}/100</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* AI Message */}
       <div
         className="w-full rounded-2xl p-6 mb-10"
         style={{ border: '1px solid #C9A84C33', background: 'linear-gradient(135deg, #0f0d00, #0a0a0a)' }}
       >
         <p className="font-cinzel text-xs tracking-[3px] mb-4" style={{ color: '#C9A84C' }}>
-          🔱 MENSAGEM PARA VOCÊ
+          {r.message_label}
         </p>
         {aiMessage.split('\n\n').map((para, i) => (
           <p key={i} className="text-sm leading-relaxed mb-4 last:mb-0" style={{ color: '#bbb' }}>
@@ -154,22 +164,21 @@ export default function Result({ name, answers, onRestart }) {
         ))}
       </div>
 
-      {/* CTA */}
       <div className="w-full text-center">
         <p className="font-cinzel text-xs tracking-[3px] mb-4" style={{ color: '#C9A84C' }}>
-          PRÓXIMO PASSO
+          {r.next_label}
         </p>
         <h3 className="font-cinzel text-2xl font-bold text-white mb-3">
-          Pronto para subir de nível?
+          {r.next_title}
         </h3>
         <p className="text-sm mb-8" style={{ color: '#888' }}>
-          Entre no programa e transforme seu diagnóstico em resultado real.
+          {r.next_desc}
         </p>
         <button className="btn-gold w-full py-4 rounded-full text-sm mb-4">
-          🔱 QUERO ENTRAR NO PROGRAMA
+          {r.cta1}
         </button>
         <button className="btn-outline w-full py-4 rounded-full text-sm mb-8">
-          AGENDAR SESSÃO ESTRATÉGICA
+          {r.cta2}
         </button>
 
         <button
@@ -177,13 +186,13 @@ export default function Result({ name, answers, onRestart }) {
           className="text-xs"
           style={{ color: '#444', background: 'none', border: 'none', cursor: 'pointer' }}
         >
-          Refazer diagnóstico
+          {r.restart}
         </button>
       </div>
 
       <div className="mt-12 text-center">
         <span className="font-cinzel text-xs tracking-[4px]" style={{ color: '#333' }}>
-          🔱 TA.IA — TECNOLOGIA APÓS INTELIGÊNCIA ARTIFICIAL
+          {r.footer}
         </span>
       </div>
     </div>

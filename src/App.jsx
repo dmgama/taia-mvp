@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { LangProvider, useLang } from './i18n/LangContext'
+import LangSwitcher from './components/LangSwitcher'
 import Intro from './components/Intro'
 import NameStep from './components/NameStep'
 import PhaseStep from './components/PhaseStep'
 import Paywall from './components/Paywall'
 import Result from './components/Result'
-import { PHASES } from './data/phases'
 
 const STEPS = {
   INTRO: 'intro',
@@ -14,7 +15,8 @@ const STEPS = {
   RESULT: 'result',
 }
 
-export default function App() {
+function AppInner() {
+  const { t } = useLang()
   const [step, setStep] = useState(STEPS.INTRO)
   const [name, setName] = useState('')
   const [phaseIndex, setPhaseIndex] = useState(0)
@@ -31,7 +33,7 @@ export default function App() {
   const handlePhaseNext = (phaseAnswers) => {
     const merged = { ...answers, ...phaseAnswers }
     setAnswers(merged)
-    if (phaseIndex < PHASES.length - 1) {
+    if (phaseIndex < t.phases.length - 1) {
       setPhaseIndex(phaseIndex + 1)
     } else {
       setStep(STEPS.PAYWALL)
@@ -52,6 +54,7 @@ export default function App() {
 
   return (
     <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
+      <LangSwitcher />
       {step === STEPS.INTRO   && <Intro onStart={handleStart} />}
       {step === STEPS.NAME    && <NameStep onNext={handleName} />}
       {step === STEPS.PHASE   && (
@@ -69,5 +72,13 @@ export default function App() {
         <Result name={name} answers={answers} onRestart={handleRestart} />
       )}
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <LangProvider>
+      <AppInner />
+    </LangProvider>
   )
 }

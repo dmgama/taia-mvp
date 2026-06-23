@@ -1,4 +1,9 @@
+import { useLang } from '../i18n/LangContext'
+
 export default function Paywall({ name, onUnlock, onSkip }) {
+  const { t } = useLang()
+  const p = t.paywall
+
   return (
     <div className="fade-in min-h-screen flex flex-col items-center justify-center px-4 py-16 text-center">
       <div className="w-full max-w-md">
@@ -10,15 +15,17 @@ export default function Paywall({ name, onUnlock, onSkip }) {
         </div>
 
         <p className="font-cinzel text-xs tracking-[4px] mb-3" style={{ color: '#C9A84C' }}>
-          RELATÓRIO COMPLETO
+          {p.label}
         </p>
         <h2 className="font-cinzel text-3xl font-bold text-white mb-4">
-          {name}, seu diagnóstico<br />está pronto.
+          {name}, {p.title.split('\n').map((line, i) => (
+            <span key={i}>{line}{i === 0 && <br />}</span>
+          ))}
         </h2>
         <p className="text-sm leading-relaxed mb-8" style={{ color: '#888' }}>
-          Você completou as 7 fases. Seu score, gráfico radar, pontos críticos e mensagem personalizada estão prontos.
+          {p.description}
           <br /><br />
-          O relatório completo revela exatamente o que você precisa fazer para subir de nível.
+          {p.description2}
         </p>
 
         <div
@@ -26,15 +33,9 @@ export default function Paywall({ name, onUnlock, onSkip }) {
           style={{ border: '1px solid #C9A84C44', background: '#0f0d00' }}
         >
           <p className="font-cinzel text-xs tracking-[2px] mb-4" style={{ color: '#C9A84C' }}>
-            O QUE ESTÁ INCLUÍDO
+            {p.included}
           </p>
-          {[
-            '🔱 Score geral + classificação completa',
-            '📊 Gráfico radar das 7 áreas',
-            '🎯 Top 3 pontos críticos identificados',
-            '💬 Mensagem personalizada com IA',
-            '📋 Plano de ação para os próximos 90 dias',
-          ].map(item => (
+          {p.items.map(item => (
             <div key={item} className="flex items-start gap-2 mb-3 text-sm" style={{ color: '#ccc' }}>
               <span>{item}</span>
             </div>
@@ -42,14 +43,14 @@ export default function Paywall({ name, onUnlock, onSkip }) {
         </div>
 
         <button className="btn-gold w-full py-4 rounded-full text-sm mb-3">
-          DESBLOQUEAR RELATÓRIO — R$97
+          {p.cta}
         </button>
         <button
           onClick={onSkip}
           className="text-xs underline"
           style={{ color: '#444', background: 'none', border: 'none', cursor: 'pointer' }}
         >
-          Ver prévia gratuita →
+          {p.skip}
         </button>
       </div>
     </div>
